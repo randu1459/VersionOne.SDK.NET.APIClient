@@ -39,6 +39,8 @@ namespace VersionOne.SDK.APIClient
         private string _upstreamUserAgent;
         private bool _isRequestConfigured = false;
 
+	    private Uri _baseAddress;
+
         private V1Connector(string instanceUrl)
         {
             if (string.IsNullOrWhiteSpace(instanceUrl))
@@ -46,17 +48,14 @@ namespace VersionOne.SDK.APIClient
             if (!instanceUrl.EndsWith("/"))
                 instanceUrl += "/";
 
-            Uri baseAddress;
-            if (Uri.TryCreate(instanceUrl, UriKind.Absolute, out baseAddress))
+			if (Uri.TryCreate(instanceUrl, UriKind.Absolute, out _baseAddress))
             {
                 _handler = new HttpClientHandler();
-                _client = new HttpClient(_handler) {BaseAddress = baseAddress};
+				_client = new HttpClient(_handler) { BaseAddress = _baseAddress };
                 _upstreamUserAgent = FormatAssemblyUserAgent(Assembly.GetEntryAssembly());
             }
             else
-            {
                 throw new ConnectionException("Instance url is not valid.");
-            }
         }
 
         /// <summary>
@@ -100,9 +99,11 @@ namespace VersionOne.SDK.APIClient
 
 		public async Task<XDocument> Post(IVersionOneAsset asset, XDocument postPayload)
 		{
-			using (var client = new HttpClient())
+			UseDataApi();
+
+			using (var client = HttpInstance)
 			{
-				var endPoint = GetResourceUrl("");
+				var endPoint = GetResourceUrl(asset.AssetType);
 				if (!string.IsNullOrWhiteSpace(asset.ID))
 					endPoint += "/" + asset.ID;
 
@@ -113,17 +114,23 @@ namespace VersionOne.SDK.APIClient
 
 		}
 
+	    private HttpClient HttpInstance
+	    {
+			get { return new HttpClient(_handler) { BaseAddress = _baseAddress }; }
+	    }
+
 		public async Task<List<T>> Query<T>(string asset, string[] properties, string[] wheres, Func<XElement, T> returnObject)
 		{
 			var result = new List<T>();
+			UseDataApi();
 
-			using (var client = new HttpClient())
+			using (var client = HttpInstance)
 			{
 				var whereClause = string.Join(";", wheres);
 
-				var hardCode = GetResourceUrl(asset) + "?sel=" + string.Join(",", properties) + "&" + whereClause;
+				var endpoint = GetResourceUrl(asset) + "?sel=" + string.Join(",", properties) + "&" + whereClause;
 
-				var xml = await client.GetStringAsync(hardCode);
+				var xml = await client.GetStringAsync(endpoint);
 				var doc = XDocument.Parse(xml);
 				if (doc.HasAssets())
 					result = doc.Root.Elements("Asset").ToList().Select(returnObject.Invoke).ToList();
@@ -135,13 +142,12 @@ namespace VersionOne.SDK.APIClient
 		public async Task<List<T>> Query<T>(string asset, string[] properties, Func<XElement, T> returnObject)
 		{
 			var result = new List<T>();
-
-			using (var client = new HttpClient())
+			UseDataApi();
+			using (var client = HttpInstance)
 			{
-				var hardCode = GetResourceUrl(asset) + "?sel=" + string.Join(",", properties);
-				//var uri = "/rest-1.v1/Data/" + asset + "?sel=" + string.Join(",", properties);
+				var endpoint = GetResourceUrl(asset) + "?sel=" + string.Join(",", properties);
 
-				var xml = await client.GetStringAsync(hardCode);
+				var xml = await client.GetStringAsync(endpoint);
 				var doc = XDocument.Parse(xml);
 				if (doc.HasAssets())
 					result = doc.Root.Elements("Asset").ToList().Select(returnObject.Invoke).ToList();
