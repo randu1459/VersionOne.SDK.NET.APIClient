@@ -148,7 +148,7 @@ namespace VersionOne.SDK.APIClient
 			{
 				var whereClause = string.Join(";", wheres);
 
-				var endpoint = GetResourceUrl(asset) + "?sel=" + string.Join(",", properties) + "&" + whereClause;
+				var endpoint = GetResourceUrl(asset) + "?sel=" + string.Join(",", properties) + "&where=" + whereClause;
 
 				var xml = await client.GetStringAsync(endpoint);
 				var doc = XDocument.Parse(xml);
