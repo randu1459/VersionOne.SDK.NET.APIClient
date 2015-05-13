@@ -171,65 +171,63 @@ namespace VersionOne.SDK.APIClient
 
         public void Save(Asset asset, string comment)
         {
-            if (asset.HasChanged || asset.Oid.IsNull)
-            {
-                var doc = new XmlDocument();
+	        if (!asset.HasChanged && !asset.Oid.IsNull) return;
+	        var doc = new XmlDocument();
 
-                var s = new StringWriter();
-                var writer = new XmlApiWriter(s, true);
-                writer.WriteAsset(asset);
-                var data = s.ToString();
+	        var s = new StringWriter();
+	        var writer = new XmlApiWriter(s, true);
+	        writer.WriteAsset(asset);
+	        var data = s.ToString();
 
-                var path = asset.AssetType.Token;
+	        var path = asset.AssetType.Token;
 
-                if (!asset.Oid.IsNull)
-                {
-                    path += "/" + asset.Oid.Key;
-                }
+	        if (!asset.Oid.IsNull)
+	        {
+		        path += "/" + asset.Oid.Key;
+	        }
 
-                if (comment != null & comment != string.Empty)
-                {
-                    path += string.Format("?Comment='{0}'", System.Web.HttpUtility.UrlEncode(comment));
-                }
+	        if (comment != null & comment != string.Empty)
+	        {
+		        path += string.Format("?Comment='{0}'", System.Web.HttpUtility.UrlEncode(comment));
+	        }
 
-                try
-                {
-                    Stream stream;
-                    if (_connector != null)
-                    {
-                        path = "Data/" + path;
-                        stream = _connector.SendData(path, data);
-                    }
-                    else
-                    {
-                        _v1Connector.UseDataApi();
-                        stream = _v1Connector.SendData(path, data);
-                    }
-                    doc.Load(stream);
-                    stream.Dispose();
+	        try
+	        {
+		        Stream stream;
+		        if (_connector != null)
+		        {
+			        path = "Data/" + path;
+			        stream = _connector.SendData(path, data);
+		        }
+		        else
+		        {
+			        _v1Connector.UseDataApi();
+			        stream = _v1Connector.SendData(path, data);
+		        }
+		        doc.Load(stream);
+		        stream.Dispose();
 
-                    ParseSaveAssetNode(doc.DocumentElement, asset);
-                }
-                catch (WebException ex)
-                {
-                    if (ex.Response == null)
-                    {
-                        throw new ConnectionException("Error writing to output stream", ex);
-                    }
+		        ParseSaveAssetNode(doc.DocumentElement, asset);
+	        }
+	        catch (WebException ex)
+	        {
+		        if (ex.Response == null)
+		        {
+			        throw new ConnectionException("Error writing to output stream", ex);
+		        }
 
-                    using (var stream = ex.Response.GetResponseStream())
-                    {
-                        doc.Load(stream);
-                    }
+		        using (var stream = ex.Response.GetResponseStream())
+		        {
+			        doc.Load(stream);
+		        }
 
-                    var message = doc.DocumentElement.SelectSingleNode("Message").InnerText;
-                    throw new APIException(message, asset.Oid.Token, ex);
-                }
-                catch (Exception ex)
-                {
-                    throw new APIException("Failed to save", asset.Oid.Token, ex);
-                }
-            }
+		        var message = doc.DocumentElement.SelectSingleNode("Message").InnerText;
+		        throw new APIException(message, asset.Oid.Token, ex);
+	        }
+	        catch (Exception ex)
+	        {
+		        throw new APIException("Failed to save", asset.Oid.Token, ex);
+	        }
         }
 
         public void Save(AssetList assetList)

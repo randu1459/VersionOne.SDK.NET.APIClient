@@ -8,8 +8,12 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Reflection;
 using System.Text;
+using System.Threading.Tasks;
 using System.Web;
+using System.Xml.Linq;
 using log4net;
+using VersionOne.SDK.APIClient.Extensions;
+using VersionOne.SDK.APIClient.Model.Interfaces;
 
 namespace VersionOne.SDK.APIClient
 {
@@ -93,6 +97,59 @@ namespace VersionOne.SDK.APIClient
 
             return result;
         }
+
+		public async Task<XDocument> Post(IVersionOneAsset asset, XDocument postPayload)
+		{
+			using (var client = new HttpClient())
+			{
+				var endPoint = GetResourceUrl("");
+				if (!string.IsNullOrWhiteSpace(asset.ID))
+					endPoint += "/" + asset.ID;
+
+				var response = await client.PostAsync(endPoint, new StringContent(postPayload.ToString()));
+				var value = await response.Content.ReadAsStringAsync();
+				return XDocument.Parse(value);
+			}
+
+		}
+
+		public async Task<List<T>> Query<T>(string asset, string[] properties, string[] wheres, Func<XElement, T> returnObject)
+		{
+			var result = new List<T>();
+
+			using (var client = new HttpClient())
+			{
+				var whereClause = string.Join(";", wheres);
+
+				var hardCode = GetResourceUrl(asset) + "?sel=" + string.Join(",", properties) + "&" + whereClause;
+
+				var xml = await client.GetStringAsync(hardCode);
+				var doc = XDocument.Parse(xml);
+				if (doc.HasAssets())
+					result = doc.Root.Elements("Asset").ToList().Select(returnObject.Invoke).ToList();
+			}
+
+			return result;
+		}
+
+		public async Task<List<T>> Query<T>(string asset, string[] properties, Func<XElement, T> returnObject)
+		{
+			var result = new List<T>();
+
+			using (var client = new HttpClient())
+			{
+				var hardCode = GetResourceUrl(asset) + "?sel=" + string.Join(",", properties);
+				//var uri = "/rest-1.v1/Data/" + asset + "?sel=" + string.Join(",", properties);
+
+				var xml = await client.GetStringAsync(hardCode);
+				var doc = XDocument.Parse(xml);
+				if (doc.HasAssets())
+					result = doc.Root.Elements("Asset").ToList().Select(returnObject.Invoke).ToList();
+			}
+
+			return result;
+		}
+
 
         internal Stream SendData(string resource = null, object data = null, string contentType = "application/xml")
         {

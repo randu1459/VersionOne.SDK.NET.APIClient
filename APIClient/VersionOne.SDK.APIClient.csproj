@@ -139,13 +139,16 @@
     <Reference Include="System.Xml">
       <Name>System.XML</Name>
     </Reference>
+    <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Extensions\XDocumentExtensions.cs" />
     <Compile Include="Model\Aggregate.cs" />
     <Compile Include="Model\Asset\AssetStateManager.cs" />
     <Compile Include="Attachments.cs" />
     <Compile Include="Model\Asset\Attribute\Attribute.cs" />
     <Compile Include="Model\Asset\Attribute\AttributeType.cs" />
+    <Compile Include="Model\Interfaces\IVersionOneAsset.cs" />
     <Compile Include="Obsolete\Config.cs">
       <SubType>Code</SubType>
     </Compile>
