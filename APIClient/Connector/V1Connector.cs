@@ -40,6 +40,7 @@ namespace VersionOne.SDK.APIClient
         private bool _isRequestConfigured = false;
 
 	    private Uri _baseAddress;
+	    private static System.Net.ICredentials _networkCreds;
 
         private V1Connector(string instanceUrl)
         {
@@ -114,9 +115,28 @@ namespace VersionOne.SDK.APIClient
 
 		}
 
+	    private HttpClientHandler _clientHandler
+	    {
+		    get
+		    {
+			    return new HttpClientHandler()
+			    {
+				    PreAuthenticate = true,
+				    AllowAutoRedirect = true,
+					Credentials = _networkCreds
+			    };
+		    }
+	    }
+
 	    private HttpClient HttpInstance
 	    {
-			get { return new HttpClient(_handler) { BaseAddress = _baseAddress }; }
+		    get
+		    {
+			    return new HttpClient(_clientHandler)
+			    {
+				    BaseAddress = _baseAddress
+			    };
+		    }
 	    }
 
 		public async Task<List<T>> Query<T>(string asset, string[] properties, string[] wheres, Func<XElement, T> returnObject)
@@ -369,7 +389,7 @@ namespace VersionOne.SDK.APIClient
                     throw new ArgumentNullException("password");
 
                 _instance._handler.Credentials = new NetworkCredential(username, password);
-
+	            _networkCreds = _instance._handler.Credentials;
                 return this;
             }
 
@@ -381,6 +401,7 @@ namespace VersionOne.SDK.APIClient
                     {_instance._client.BaseAddress, "Negotiate", CredentialCache.DefaultNetworkCredentials}
                 };
                 _instance._handler.Credentials = credentialCache;
+				_networkCreds = _instance._handler.Credentials;
 
                 return this;
             }
@@ -393,6 +414,7 @@ namespace VersionOne.SDK.APIClient
                     throw new ArgumentNullException("password");
 
                 _instance._handler.Credentials = new NetworkCredential(fullyQualifiedDomainUsername, password);
+				_networkCreds = _instance._handler.Credentials;
 
                 return this;
             }
