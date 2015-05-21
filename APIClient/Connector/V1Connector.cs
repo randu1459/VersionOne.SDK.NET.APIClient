@@ -54,10 +54,13 @@ namespace VersionOne.SDK.APIClient
                 _handler = new HttpClientHandler();
 				_client = new HttpClient(_handler) { BaseAddress = _baseAddress };
                 _upstreamUserAgent = FormatAssemblyUserAgent(Assembly.GetEntryAssembly());
+                InstanceUrl = _client.BaseAddress.AbsoluteUri;
             }
             else
                 throw new ConnectionException("Instance url is not valid.");
         }
+
+        public string InstanceUrl { get; private set; }
 
         /// <summary>
         /// Required method for setting the URL of the VersionOne instance.
