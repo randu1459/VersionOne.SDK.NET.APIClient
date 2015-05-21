@@ -17,10 +17,21 @@ using VersionOne.SDK.APIClient.Model.Interfaces;
 
 namespace VersionOne.SDK.APIClient
 {
+    public interface IV1Connector
+    {
+        string InstanceUrl { get; }
+
+        Task<XDocument> Operation(IVersionOneAsset asset, string operation); //this is higher level so should this live here?
+        Task<XDocument> Post(IVersionOneAsset asset, XDocument postPayload);
+        Task<List<T>> Query<T>(string asset, string[] properties, string[] wheres, Func<XElement, T> returnObject);
+        Task<List<T>> Query<T>(string asset, string[] properties, Func<XElement, T> returnObject);
+        Task<XDocument> Operation(string asset, string operation);
+    }
+
     /// <summary>
     /// Used to establish a connection to a VersionOne instance.
     /// </summary>
-    public class V1Connector
+    public class V1Connector : IV1Connector
     {
         private const string META_API_ENDPOINT = "meta.v1/";
         private const string DATA_API_ENDPOINT = "rest-1.v1/Data/";
