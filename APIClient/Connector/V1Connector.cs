@@ -42,7 +42,7 @@ namespace VersionOne.SDK.APIClient
 	    private Uri _baseAddress;
 	    private static System.Net.ICredentials _networkCreds;
 
-        private V1Connector(string instanceUrl)
+	    protected V1Connector(string instanceUrl)
         {
             if (string.IsNullOrWhiteSpace(instanceUrl))
                 throw new ArgumentNullException("instanceUrl");
@@ -96,6 +96,21 @@ namespace VersionOne.SDK.APIClient
             LogResponse(response, result.ToString());
 
             return result;
+        }
+
+        private const string _operation = "{0}/{1}?op={2}";
+        public async Task<XDocument> Operation(IVersionOneAsset asset, string operation) //this is higher level so should this live here?
+        {
+            UseDataApi();
+
+            using (var client = HttpInstance)
+            {
+                var endPoint = string.Format(_operation, GetResourceUrl(asset.AssetType), asset.ID, operation);
+
+                var response = await client.PostAsync(endPoint, new StringContent(""));
+                var value = await response.Content.ReadAsStringAsync();
+                return XDocument.Parse(value);
+            }
         }
 
 		public async Task<XDocument> Post(IVersionOneAsset asset, XDocument postPayload)
@@ -175,6 +190,18 @@ namespace VersionOne.SDK.APIClient
 
 			return result;
 		}
+
+	    public async Task<XDocument> Operation(string asset, string operation)
+	    {
+		    UseDataApi();
+		    using (var client = HttpInstance)
+		    {
+			    var endpoint = GetResourceUrl(asset) + "?op=" + operation;
+				var response = await client.PostAsync(endpoint, new StringContent(""));
+				var value = await response.Content.ReadAsStringAsync();
+				return XDocument.Parse(value);
+			}
+	    }
 
 
         internal Stream SendData(string resource = null, object data = null, string contentType = "application/xml")

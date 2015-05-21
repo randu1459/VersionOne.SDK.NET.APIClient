@@ -38,6 +38,7 @@
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Data" />
+    <Reference Include="System.Net.Http" />
     <Reference Include="System.Xml" />
   </ItemGroup>
   <Choose>
@@ -53,10 +54,13 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
+    <Compile Include="ConnectorTests\BasicQueryTests.cs" />
     <Compile Include="DBTests\BitTester.cs" />
     <Compile Include="DBTests\DateTimeTester.cs" />
     <Compile Include="DBTests\IntTester.cs" />
     <Compile Include="DBTests\StrTester.cs" />
+    <Compile Include="Helpers\GetContent.cs" />
+    <Compile Include="Helpers\MockHttp.cs" />
     <Compile Include="LocalizerTests\LocalizerTesterBase.cs" />
     <Compile Include="LocalizerTests\LocalizerTester.cs" />
     <Compile Include="MetaTests\MetaTesterBase.cs" />
